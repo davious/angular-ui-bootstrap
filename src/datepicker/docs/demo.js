@@ -1,11 +1,14 @@
-angular.module('ui.bootstrap.demo').controller('DatepickerDemoCtrl', function ($scope) {
+angular.module('ui.bootstrap.demo').controller('DatepickerDemoCtrl',
+function ($scope, dateFilter, timelessJsonUtils) {
   $scope.today = function() {
     $scope.dt = new Date();
+    $scope.tdt = dateFilter($scope.dt, 'yyyy-MM-dd');
   };
   $scope.today();
 
   $scope.clear = function() {
     $scope.dt = null;
+    $scope.tdt = null;
   };
 
   // Disable weekend selection
@@ -30,6 +33,7 @@ angular.module('ui.bootstrap.demo').controller('DatepickerDemoCtrl', function ($
 
   $scope.setDate = function(year, month, day) {
     $scope.dt = new Date(year, month, day);
+    $scope.tdt = dateFilter($scope.dt, 'yyyy-MM-dd');
   };
 
   $scope.dateOptions = {
@@ -79,5 +83,14 @@ angular.module('ui.bootstrap.demo').controller('DatepickerDemoCtrl', function ($
     }
 
     return '';
+  };
+
+  $scope.timelessJsonUtils = timelessJsonUtils;
+  $scope.toggleJsonMode = function() {
+    if ($scope.timelessJsonMode) {
+      $scope.tdt = dateFilter($scope.dt, 'yyyy-MM-dd');
+    } else {
+      $scope.dt = timelessJsonUtils.jsonToDate($scope.tdt);
+    }
   };
 });

@@ -1266,6 +1266,99 @@ describe('datepicker', function() {
       });
     });
 
+    describe('datepickerConfig.timelessJsonMode = true', function() {
+      var originalConfig = {};
+      beforeEach(inject(function(uibDatepickerConfig) {
+        angular.extend(originalConfig, uibDatepickerConfig);
+        uibDatepickerConfig.timelessJsonMode = true;
+        $rootScope.date = '2005-11-07T00:00:00.000';
+        element = $compile('<uib-datepicker ng-model="date"></uib-datepicker>')($rootScope);
+        $rootScope.$digest();
+      }));
+
+      afterEach(inject(function(uibDatepickerConfig) {
+        // return it to the original state
+        angular.extend(uibDatepickerConfig, originalConfig);
+      }));
+
+      it('formats model to yyyy-MM-dd on initialization', function() {
+        expect($rootScope.date).toEqual('2005-11-07');
+        expectSelectedElement(8);
+      });
+
+      it('updates the input when a day is clicked', function() {
+        clickOption(9);
+        expect($rootScope.date).toEqual('2005-11-08');
+      });
+    });
+
+    describe('uib-datepicker timeless-json-mode="true"', function() {
+      beforeEach(inject(function() {
+        $rootScope.date = '2005-11-07T00:00:00.000';
+        element = $compile('<uib-datepicker ng-model="date" timeless-json-mode="true"></uib-datepicker>')($rootScope);
+        $rootScope.$digest();
+      }));
+
+      it('formats model to yyyy-MM-dd on initialization', function() {
+        expect($rootScope.date).toEqual('2005-11-07');
+        expectSelectedElement(8);
+      });
+
+      it('updates the input when a day is clicked', function() {
+        clickOption(9);
+        expect($rootScope.date).toEqual('2005-11-08');
+      });
+    });
+
+    describe('uib-datepicker timeless-json-mode="false"', function() {
+      beforeEach(inject(function() {
+        $rootScope.date = '2005-11-07T00:00:00.000';
+        element = $compile('<uib-datepicker ng-model="date" timeless-json-mode="false"></uib-datepicker>')($rootScope);
+        $rootScope.$digest();
+      }));
+
+      it('DOES NOT format model to yyyy-MM-dd on initialization', function() {
+        expect($rootScope.date).not.toEqual('2005-11-07');
+      });
+
+      it('DOES NOT update with format when the input when a day is clicked', function() {
+        clickOption(9);
+        expect($rootScope.date).not.toEqual('2005-11-08');
+      });
+    });
+
+    describe('uibDatepickerConfig.timelessJsonMode = "withUtils"', function() {
+      var originalConfig = {};
+      beforeEach(inject(function(uibDatepickerConfig) {
+        angular.extend(originalConfig, uibDatepickerConfig);
+        uibDatepickerConfig.timelessJsonMode = 'withUtils';
+        $rootScope.date = '2005-11-07T00:00:00.000';
+        element = $compile('<uib-datepicker ng-model="date" max-date="jsonDateToTicks(date, 1)"></uib-datepicker>')($rootScope);
+        $rootScope.$digest();
+      }));
+
+      afterEach(inject(function(uibDatepickerConfig) {
+        // return it to the original state
+        angular.extend(uibDatepickerConfig, originalConfig);
+      }));
+
+      it('jsonDateToTicks/jsonDateAddDays should be on parent scope and work with max-date', function() {
+        expect(getAllOptionsEl().eq(10).prop('disabled')).toBe(true);
+      });
+    });
+
+    describe('uib-datepicker jsonDateToTicks/jsonDateAddDays with timeless-json-mode="withUtils"', function() {
+      beforeEach(inject(function() {
+        $rootScope.date = '2005-11-07T00:00:00.000';
+        element = $compile('<uib-datepicker ng-model="date" timeless-json-mode="withUtils" max-date="jsonDateToTicks(date, 1)"></uib-datepicker>')($rootScope);
+        $rootScope.$digest();
+      }));
+
+      it('jsonDateToTicks/jsonDateAddDays should be on parent scope and work with max-date', function() {
+        expect(getAllOptionsEl().eq(10).prop('disabled')).toBe(true);
+      });
+    });
+
     describe('setting datepickerPopupConfig', function() {
       var originalConfig = {};
       beforeEach(inject(function(uibDatepickerPopupConfig) {
@@ -1284,6 +1377,207 @@ describe('datepicker', function() {
         expect(element.val()).toEqual('09-30-2010');
       });
 
+    });
+
+    describe('uib-datepicker-popup uibDatepickerConfig.timelessJsonMode = true', function() {
+      var inputEl, dropdownEl, $document, $sniffer, $timeout;
+
+      function assignElements(wrapElement) {
+        inputEl = wrapElement.find('input');
+        dropdownEl = wrapElement.find('ul');
+        element = dropdownEl.find('table');
+      }
+
+      beforeEach(inject(function(uibDatepickerConfig) {
+        uibDatepickerConfig.timelessJsonMode = true;
+        $rootScope.date = '2010-09-30T00:00:00.000';
+        $rootScope.isopen = true;
+        var wrapper = $compile('<div><input ng-model="date" uib-datepicker-popup="MM/dd/yyyy" is-open="isopen"></div>')($rootScope);
+        $rootScope.$digest();
+        assignElements(wrapper);
+      }));
+
+      afterEach(inject(function (uibDatepickerConfig) {
+        // return it to the original state
+        delete uibDatepickerConfig.timelessJsonMode;
+      }));
+
+      it('formats model to yyyy-MM-dd on initialization', function() {
+        expect(inputEl.val()).toBe('09/30/2010');
+        expect($rootScope.date).toEqual('2010-09-30');
+      });
+
+      it('updates the input when a day is clicked', function() {
+        clickOption(17);
+        expect(inputEl.val()).toBe('09/15/2010');
+        expect($rootScope.date).toEqual('2010-09-15');
+      });
+    });
+
+    describe('uib-datepicker-popup timeless-json-mode', function() {
+      var inputEl, dropdownEl, $document, $sniffer, $timeout;
+
+      function assignElements(wrapElement) {
+        inputEl = wrapElement.find('input');
+        dropdownEl = wrapElement.find('ul');
+        element = dropdownEl.find('table');
+      }
+
+      beforeEach(inject(function() {
+        $rootScope.date = '2010-09-30T00:00:00.000';
+        $rootScope.isopen = true;
+        var wrapper = $compile('<div><input ng-model="date" uib-datepicker-popup="MM/dd/yyyy" timeless-json-mode is-open="isopen"></div>')($rootScope);
+        $rootScope.$digest();
+        assignElements(wrapper);
+      }));
+
+      it('formats model to yyyy-MM-dd on initialization', function() {
+        expect(inputEl.val()).toBe('09/30/2010');
+        expect($rootScope.date).toEqual('2010-09-30');
+      });
+
+      it('updates the input when a day is clicked', function() {
+        clickOption(17);
+        expect(inputEl.val()).toBe('09/15/2010');
+        expect($rootScope.date).toEqual('2010-09-15');
+      });
+    });
+
+    describe('uib-datepicker-popup timeless-json-mode="false"', function() {
+      var inputEl, dropdownEl, $document, $sniffer, $timeout;
+
+      function assignElements(wrapElement) {
+        inputEl = wrapElement.find('input');
+        dropdownEl = wrapElement.find('ul');
+        element = dropdownEl.find('table');
+      }
+
+      beforeEach(inject(function() {
+        $rootScope.date = '2010-09-30T00:00:00.000';
+        $rootScope.isopen = true;
+        var wrapper = $compile('<div><input ng-model="date" uib-datepicker-popup="MM/dd/yyyy" timeless-json-mode="false" is-open="isopen"></div>')($rootScope);
+        $rootScope.$digest();
+        assignElements(wrapper);
+      }));
+
+      it('DOES NOT format model to yyyy-MM-dd on initialization', function() {
+        expect(inputEl.val()).toBe('09/30/2010');
+        expect($rootScope.date).not.toEqual('2010-09-30');
+      });
+
+      it('DOES NOT update with format the input when a day is clicked', function() {
+        clickOption(17);
+        expect(inputEl.val()).toBe('09/15/2010');
+        expect($rootScope.date).not.toEqual('2010-09-15');
+      });
+    });
+
+    describe('uib-datepicker-popup uibDatepickerConfig.timelessJsonMode = true with HTML5', function() {
+      var inputEl, dropdownEl, $document, $sniffer, $timeout;
+
+      function assignElements(wrapElement) {
+        inputEl = wrapElement.find('input');
+        dropdownEl = wrapElement.find('ul');
+        element = dropdownEl.find('table');
+      }
+
+      beforeEach(inject(function(uibDatepickerConfig) {
+        uibDatepickerConfig.timelessJsonMode = true;
+        $rootScope.date = '2010-09-30T00:00:00.000';
+        $rootScope.isopen = true;
+        var wrapper = $compile('<div><input type="date" ng-model="date" uib-datepicker-popup is-open="isopen"></div>')($rootScope);
+        $rootScope.$digest();
+        assignElements(wrapper);
+      }));
+
+      afterEach(inject(function (uibDatepickerConfig) {
+        // return it to the original state
+        delete uibDatepickerConfig.timelessJsonMode;
+      }));
+
+      it('formats model to yyyy-MM-dd on initialization', function() {
+        expect(inputEl.val()).toBe('2010-09-30');
+        expect($rootScope.date).toEqual('2010-09-30');
+      });
+
+      it('updates the input when a day is clicked', function() {
+        clickOption(17);
+        expect(inputEl.val()).toBe('2010-09-15');
+        expect($rootScope.date).toEqual('2010-09-15');
+      });
+    });
+
+    describe('jsonDateUtils service: timelessJsonUtils.jsonDateToTicks', function() {
+      var inputEl, dropdownEl, $document, $sniffer, $timeout;
+
+      function assignElements(wrapElement) {
+        inputEl = wrapElement.find('input');
+        dropdownEl = wrapElement.find('ul');
+        element = dropdownEl.find('table');
+      }
+
+      beforeEach(inject(function(timelessJsonUtils) {
+        $rootScope.toTicks = timelessJsonUtils.jsonDateToTicks;
+        $rootScope.date = '2010-09-15T00:00:00.000';
+        $rootScope.isopen = true;
+        var wrapper = $compile('<div><input ng-model="date" uib-datepicker-popup="MM/dd/yyyy" timeless-json-mode max-date="toTicks(date, 1)" is-open="isopen"></div>')($rootScope);
+        $rootScope.$digest();
+        assignElements(wrapper);
+      }));
+
+      it('service method jsonDateUtils.jsonDateToTicks should work with max-date', function() {
+        expect(getAllOptionsEl().eq(19).prop('disabled')).toBe(true);
+      });
+    });
+
+    describe('uib-datepicker-popup uibDatepickerConfig.timelessJsonMode = "withUtils"', function() {
+      var inputEl, dropdownEl, $document, $sniffer, $timeout;
+
+      function assignElements(wrapElement) {
+        inputEl = wrapElement.find('input');
+        dropdownEl = wrapElement.find('ul');
+        element = dropdownEl.find('table');
+      }
+
+      beforeEach(inject(function(uibDatepickerConfig) {
+        uibDatepickerConfig.timelessJsonMode = 'withUtils';
+        $rootScope.date = '2010-09-15T00:00:00.000';
+        $rootScope.isopen = true;
+        var wrapper = $compile('<div><input ng-model="date" uib-datepicker-popup="MM/dd/yyyy" max-date="jsonDateAddDays(date, 1)" is-open="isopen"></div>')($rootScope);
+        $rootScope.$digest();
+        assignElements(wrapper);
+      }));
+
+      afterEach(inject(function (uibDatepickerConfig) {
+        // return it to the original state
+        delete uibDatepickerConfig.timelessJsonMode;
+      }));
+
+      it('jsonDateToTicks/jsonDateAddDays should be on parent scope and work with max-date', function() {
+        expect(getAllOptionsEl().eq(19).prop('disabled')).toBe(true);
+      });
+    });
+
+    describe('uib-datepicker-popup jsonDateToTicks/jsonDateAddDays with timeless-json-mode="withUtils"', function() {
+      var inputEl, dropdownEl, $document, $sniffer, $timeout;
+
+      function assignElements(wrapElement) {
+        inputEl = wrapElement.find('input');
+        dropdownEl = wrapElement.find('ul');
+        element = dropdownEl.find('table');
+      }
+
+      beforeEach(inject(function() {
+        $rootScope.date = '2010-09-15T00:00:00.000';
+        $rootScope.isopen = true;
+        var wrapper = $compile('<div><input ng-model="date" uib-datepicker-popup="MM/dd/yyyy" timeless-json-mode="withUtils" timeless-json-utils max-date="jsonDateToTicks(date, 1)" is-open="isopen"></div>')($rootScope);
+        $rootScope.$digest();
+        assignElements(wrapper);
+      }));
+
+      it('jsonDateToTicks/jsonDateAddDays should be on parent scope and work with max-date', function() {
+        expect(getAllOptionsEl().eq(19).prop('disabled')).toBe(true);
+      });
     });
 
     describe('setting datepickerPopupConfig inside ng-if', function() {
@@ -1675,6 +1969,28 @@ describe('datepicker', function() {
 
           it('shows the correct title', function() {
             expect(getTitle()).toBe('November 1980');
+          });
+        });
+
+        describe('timelessJsonMode', function() {
+          beforeEach(inject(function() {
+              $rootScope.date = new Date('November 07, 2005');
+              $rootScope.opts = {
+                'timelessJsonMode': true
+              };
+              var wrapElement = $compile('<div><input ng-model="date" uib-datepicker-popup datepicker-options="opts" is-open="true"></div>')($rootScope);
+              $rootScope.$digest();
+              assignElements(wrapElement);
+          }));
+
+          it('formats model to yyyy-MM-dd on initialization', function() {
+            expect($rootScope.date).toEqual('2005-11-07');
+            expectSelectedElement(8);
+          });
+
+          it('updates the input when a day is clicked', function() {
+            clickOption(9);
+            expect($rootScope.date).toEqual('2005-11-08');
           });
         });
       });

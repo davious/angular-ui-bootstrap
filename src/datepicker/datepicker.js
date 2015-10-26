@@ -17,10 +17,12 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   yearRange: 20,
   minDate: null,
   maxDate: null,
-  shortcutPropagation: false
+  shortcutPropagation: false,
+  timelessJsonMode: false
 })
 
-.controller('UibDatepickerController', ['$scope', '$attrs', '$parse', '$interpolate', '$log', 'dateFilter', 'uibDatepickerConfig', '$datepickerSuppressError', function($scope, $attrs, $parse, $interpolate, $log, dateFilter, datepickerConfig, $datepickerSuppressError) {
+.controller('UibDatepickerController', ['$scope', '$attrs', '$parse', '$interpolate', '$log', 'dateFilter', 'uibDatepickerConfig', '$datepickerSuppressError', 'timelessJsonUtils',
+  function($scope, $attrs, $parse, $interpolate, $log, dateFilter, datepickerConfig, $datepickerSuppressError, timelessJsonUtils) {
   var self = this,
       ngModelCtrl = { $setViewValue: angular.noop }; // nullModelCtrl;
 
@@ -36,6 +38,13 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   angular.forEach(['showWeeks', 'startingDay', 'yearRange', 'shortcutPropagation'], function(key) {
     self[key] = angular.isDefined($attrs[key]) ? $scope.$parent.$eval($attrs[key]) : datepickerConfig[key];
   });
+
+  self.timelessJsonMode = angular.isDefined($attrs.timelessJsonMode) ?
+     $attrs.timelessJsonMode.toLowerCase() !== 'false' : datepickerConfig.timelessJsonMode;
+
+  if (($attrs.timelessJsonMode || datepickerConfig.timelessJsonMode || '').toString().toLowerCase() === 'withutils') {
+    angular.extend($scope.$parent, timelessJsonUtils);
+  }
 
   // Watchable date attributes
   angular.forEach(['minDate', 'maxDate'], function(key) {
@@ -106,8 +115,10 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
     if (ngModelCtrl.$viewValue) {
       var date = new Date(ngModelCtrl.$viewValue),
           isValid = !isNaN(date);
-
       if (isValid) {
+        if (self.timelessJsonMode) {
+          date = timelessJsonUtils.jsonToDate(date.toJSON(), ngModelCtrl, dateFilter);
+        }
         this.activeDate = date;
       } else if (!$datepickerSuppressError) {
         $log.error('Datepicker directive: "ng-model" value must be a Date object, a number of milliseconds since 01.01.1970 or a string representing an RFC2822 or ISO 8601 date.');
@@ -128,6 +139,9 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
 
   this.createDateObject = function(date, format) {
     var model = ngModelCtrl.$viewValue ? new Date(ngModelCtrl.$viewValue) : null;
+    if (model && self.timelessJsonMode) {
+      model = timelessJsonUtils.jsonToDate(model.toJSON());
+    }
     return {
       date: date,
       label: dateFilter(date, format),
@@ -162,6 +176,9 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
     if ($scope.datepickerMode === self.minMode) {
       var dt = ngModelCtrl.$viewValue ? new Date(ngModelCtrl.$viewValue) : new Date(0, 0, 0, 0, 0, 0, 0);
       dt.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+      if (self.timelessJsonMode) {
+        dt = dateFilter(dt, 'yyyy-MM-dd');
+      }
       ngModelCtrl.$setViewValue(dt);
       ngModelCtrl.$render();
     } else {
@@ -543,14 +560,14 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   altInputFormats: []
 })
 
-.controller('UibDatepickerPopupController', ['$scope', '$element', '$attrs', '$compile', '$parse', '$document', '$rootScope', '$uibPosition', 'dateFilter', 'uibDateParser', 'uibDatepickerPopupConfig', '$timeout',
-function(scope, element, attrs, $compile, $parse, $document, $rootScope, $position, dateFilter, dateParser, datepickerPopupConfig, $timeout) {
+.controller('UibDatepickerPopupController', ['$scope', '$element', '$attrs', '$compile', '$parse', '$document', '$rootScope', '$uibPosition', 'dateFilter', 'uibDateParser', 'uibDatepickerPopupConfig', '$timeout', 'timelessJsonUtils', 'uibDatepickerConfig',
+function(scope, element, attrs, $compile, $parse, $document, $rootScope, $position, dateFilter, dateParser, datepickerPopupConfig, $timeout, timelessJsonUtils, datepickerConfig) {
   var self = this;
   var cache = {},
     isHtml5DateInput = false;
   var dateFormat, closeOnDateSelection, appendToBody, onOpenFocus,
     datepickerPopupTemplateUrl, datepickerTemplateUrl, popupEl, datepickerEl,
-    ngModel, $popup, altInputFormats;
+    ngModel, $popup, altInputFormats, timelessJsonMode, addTimelessJsonUtils;
 
   scope.watchData = {};
 
@@ -612,8 +629,9 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
       }
     }
 
+    var options;
     if (attrs.datepickerOptions) {
-      var options = scope.$parent.$eval(attrs.datepickerOptions);
+      options = scope.$parent.$eval(attrs.datepickerOptions);
       if (options && options.initDate) {
         scope.initDate = options.initDate;
         datepickerEl.attr('init-date', 'initDate');
@@ -661,17 +679,38 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
       datepickerEl.attr('custom-class', 'customClass({ date: date, mode: mode })');
     }
 
+    timelessJsonMode = angular.isDefined(attrs.timelessJsonMode) ? attrs.timelessJsonMode.toLowerCase() !== 'false'
+      : options && angular.isDefined(options.timelessJsonMode) ? options.timelessJsonMode : datepickerConfig.timelessJsonMode;
+    addTimelessJsonUtils = (attrs.timelessJsonMode || timelessJsonMode|| '').toString().toLowerCase() === 'withutils';
+    if (timelessJsonMode) {
+      datepickerEl.attr('timeless-json-mode', 'false');
+      if (addTimelessJsonUtils) {
+        angular.extend(scope.$parent, timelessJsonUtils);
+      }
+    }
+
     if (!isHtml5DateInput) {
       // Internal API to maintain the correct ng-invalid-[key] class
       ngModel.$$parserName = 'date';
       ngModel.$validators.date = validator;
       ngModel.$parsers.unshift(parseDate);
       ngModel.$formatters.push(function(value) {
+        if (timelessJsonMode) {
+          value = timelessJsonUtils.jsonToDate(value, ngModel, dateFilter, dateFormat);
+        }
         scope.date = value;
         return ngModel.$isEmpty(value) ? value : dateFilter(value, dateFormat);
       });
     } else {
+      if (timelessJsonMode) {
+        ngModel.$parsers.push(function(viewValue) {
+          return dateFilter(viewValue, 'yyyy-MM-dd');
+        });
+      }
       ngModel.$formatters.push(function(value) {
+        if (timelessJsonMode) {
+          value = timelessJsonUtils.jsonToDate(value, ngModel, dateFilter, dateFormat);
+        }
         scope.date = value;
         return value;
       });
@@ -823,8 +862,9 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
       }
       if (isNaN(date)) {
         return undefined;
+      } else if (timelessJsonMode) {
+        return dateFilter(date, 'yyyy-MM-dd');
       }
-
       return date;
     }
 
@@ -832,6 +872,9 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
   }
 
   function validator(modelValue, viewValue) {
+    if (timelessJsonMode) {
+      modelValue = timelessJsonUtils.jsonToDate(modelValue, ngModel, dateFilter, dateFormat);
+    }
     var value = modelValue || viewValue;
 
     if (!attrs.ngRequired && !value) {
@@ -930,4 +973,51 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
       return attrs.templateUrl || 'uib/template/datepicker/popup.html';
     }
   };
+})
+.service('timelessJsonUtils', function() {
+  return {
+    jsonToDate: jsonToDate,
+    jsonDateToTicks: jsonDateToTicks,
+    jsonDateAddDays: jsonDateToTicks
+  };
+  function jsonToDate(date, ngModel, dateFilter, dateFormat) {
+    var update = false;
+    if (angular.isString(date) && date.indexOf('-') > -1) {
+      update = date.indexOf('T') > -1;
+      date = date.substring(0, 10).split('-');
+      var year = +date[0];
+      date = new Date(year, +date[1] - 1, +date[2]);
+      date.setFullYear(year);
+    } else if (angular.isDate(date) && !isNaN(date)) {
+      update = true;
+    }
+    if (update && ngModel) {
+      if (dateFormat) { // datepickerPopup call
+        ngModel.$setViewValue(dateFilter(date, dateFormat));
+        ngModel.$render();
+      } else { // datepicker call from render
+        ngModel.$setViewValue(dateFilter(date, 'yyyy-MM-dd'));
+      }
+    }
+    return date;
+  }
+  function jsonDateToTicks(date, additionalDays) {
+    if (!date) {
+      return null;
+    }
+    if (angular.isString(date) && date.indexOf('-') > -1) {
+      date = date.substring(0, 10).split('-');
+      var year = +date[0];
+      date = new Date(year, +date[1] - 1, +date[2]);
+      date.setFullYear(year);
+    }
+    if (!date.getTime) {
+      return null;
+    }
+    var ticks = date.getTime();
+    if (additionalDays) {
+      ticks += +additionalDays * 1000 * 60 * 60 * 24;
+    }
+    return ticks;
+  }
 });

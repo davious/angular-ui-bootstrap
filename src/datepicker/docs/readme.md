@@ -95,6 +95,15 @@ The datepicker has 3 modes:
   _(Default: `20`)_ -
   Number of years displayed in year selection.
 
+ * `timeless-json-mode`
+  _(Default: false)_ :
+  Whether to keep models with [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)-like dates as 'yyyy-MM-dd' strings
+    * `timeless-json-mode = 'withUtils'` adds `service` `timelessJsonUtils` methods to parent scope
+    * `timelessJsonUtils` methods:
+        * `jsonDateToTicks(date)`: for use with `min-date` and `max-date`
+        * `jsonDateAddDays(date, additionalDays)`: alias of `jsonDateToTicks`
+        * `jsonToDate(date[, ngModel, dateFilter, dateFormat])`: used internally, converts a `ISO 8601`-like date to a `Date` object.
+
 ### uib-datepicker-popup settings ###
 
 Options for the uib-datepicker must be passed as JSON using the `datepicker-options` attribute. This list is only for popup settings.
