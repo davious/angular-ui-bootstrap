@@ -539,7 +539,8 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   closeOnDateSelection: true,
   appendToBody: false,
   showButtonBar: true,
-  onOpenFocus: true
+  onOpenFocus: true,
+  altInputFormats: []
 })
 
 .controller('UibDatepickerPopupController', ['$scope', '$element', '$attrs', '$compile', '$parse', '$document', '$rootScope', '$uibPosition', 'dateFilter', 'uibDateParser', 'uibDatepickerPopupConfig', '$timeout',
@@ -549,7 +550,7 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
     isHtml5DateInput = false;
   var dateFormat, closeOnDateSelection, appendToBody, onOpenFocus,
     datepickerPopupTemplateUrl, datepickerTemplateUrl, popupEl, datepickerEl,
-    ngModel, $popup;
+    ngModel, $popup, altInputFormats;
 
   scope.watchData = {};
 
@@ -560,6 +561,7 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
     onOpenFocus = angular.isDefined(attrs.onOpenFocus) ? scope.$parent.$eval(attrs.onOpenFocus) : datepickerPopupConfig.onOpenFocus;
     datepickerPopupTemplateUrl = angular.isDefined(attrs.datepickerPopupTemplateUrl) ? attrs.datepickerPopupTemplateUrl : datepickerPopupConfig.datepickerPopupTemplateUrl;
     datepickerTemplateUrl = angular.isDefined(attrs.datepickerTemplateUrl) ? attrs.datepickerTemplateUrl : datepickerPopupConfig.datepickerTemplateUrl;
+    altInputFormats = angular.isDefined(attrs.altInputFormats) ? attrs.altInputFormats.split(',') : datepickerPopupConfig.altInputFormats;
 
     scope.showButtonBar = angular.isDefined(attrs.showButtonBar) ? scope.$parent.$eval(attrs.showButtonBar) : datepickerPopupConfig.showButtonBar;
 
@@ -811,6 +813,9 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
 
     if (angular.isString(viewValue)) {
       var date = dateParser.parse(viewValue, dateFormat, scope.date);
+      for(var i = 0; isNaN(date) && i < altInputFormats.length; i++) {
+        date = dateParser.parse(viewValue, altInputFormats[i], scope.date);
+      }
       if (isNaN(date)) {
         return undefined;
       }
@@ -842,6 +847,9 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
 
     if (angular.isString(value)) {
       var date = dateParser.parse(value, dateFormat);
+      for(var i = 0; isNaN(date) && i < altInputFormats.length; i++) {
+        date = dateParser.parse(value, altInputFormats[i]);
+      }
       return !isNaN(date);
     }
 
