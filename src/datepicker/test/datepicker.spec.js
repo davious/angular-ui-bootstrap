@@ -2369,7 +2369,7 @@ describe('datepicker', function() {
         describe('attribute `alt-input-formats`', function() {
           beforeEach(function() {
             $rootScope.date = new Date('November 9, 1980');
-            var wrapElement = $compile('<div><input ng-model="date" uib-datepicker-popup="MMMM d yyyy" alt-input-formats="M!/d!/yyyy" is-open="true"></div>')($rootScope);
+            var wrapElement = $compile('<div><input ng-model="date" uib-datepicker-popup="MMMM d yyyy" alt-input-formats="[\'M!/d!/yyyy\']" is-open="true"></div>')($rootScope);
             $rootScope.$digest();
             assignElements(wrapElement);
           });
