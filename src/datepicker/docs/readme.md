@@ -145,10 +145,10 @@ Options for the uib-datepicker must be passed as JSON using the `datepicker-opti
   The format for displayed dates. This string can take string literals by surrounding the value with single quotes, i.e. `yyyy-MM-dd h 'o\'clock'`
 
  * `alt-input-formats`
-  _(Default: [])_:
+  _(Default: `[]`)_:
   A list of alternate formats acceptable for manual entry.
 
-### Keyboard Support ###s
+### Keyboard support ###
 
 Depending on datepicker's current mode, the date may refer either to day, month or year. Accordingly, the term view refers either to a month, year or year range.
 
