@@ -814,7 +814,7 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
     if (angular.isString(viewValue)) {
       var date = dateParser.parse(viewValue, dateFormat, scope.date);
       if (isNaN(date)) {
-        for(var i = 0; i < altInputFormats.length; i++) {
+        for (var i = 0; i < altInputFormats.length; i++) {
           date = dateParser.parse(viewValue, altInputFormats[i], scope.date);
           if (!isNaN(date)) {
             break;
@@ -853,7 +853,7 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
     if (angular.isString(value)) {
       var date = dateParser.parse(value, dateFormat);
       if (isNaN(date)) {
-        for(var i = 0; i < altInputFormats.length; i++) {
+        for (var i = 0; i < altInputFormats.length; i++) {
           date = dateParser.parse(value, altInputFormats[i]);
           if (!isNaN(date)) {
             break;
