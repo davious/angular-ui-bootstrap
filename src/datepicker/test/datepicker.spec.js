@@ -4079,6 +4079,26 @@ describe('datepicker', function() {
             expect(buttons.eq(0).prop('disabled')).toBe(true);
           }));
 
+          it('should disable today button if before min date, literal displayFormat case', inject(function(dateFilter) {
+            var minDate = new Date(new Date().setDate(new Date().getDate() + 1));
+            var literalMinDate = dateFilter(minDate, 'dd/MM/yyyy');
+            var wrapElement = $compile('<div><input ng-model="date" uib-datepicker-popup="dd/MM/yyyy" min-date="\'' + literalMinDate + '\'" is-open="true"><div>')($rootScope);
+            $rootScope.$digest();
+            assignElements(wrapElement);
+            assignButtonBar();
+            expect(buttons.eq(0).prop('disabled')).toBe(true);
+          }));
+
+          it('should disable today button if after max date', function() {
+            $rootScope.maxDate = new Date().setDate(new Date().getDate() - 2);
+            var wrapElement = $compile('<div><input ng-model="date" uib-datepicker-popup max-date="maxDate" is-open="true"><div>')($rootScope);
+            $rootScope.$digest();
+            assignElements(wrapElement);
+            assignButtonBar();
+
+            expect(buttons.eq(0).prop('disabled')).toBe(true);
+          });
+
           it('should not disable any button if min date is null', function() {
             $rootScope.minDate = null;
             var wrapElement = $compile('<div><input ng-model="date" uib-datepicker-popup min-date="minDate" is-open="true"><div>')($rootScope);
@@ -4089,16 +4109,6 @@ describe('datepicker', function() {
             for (var i = 0; i < buttons.length; i++) {
               expect(buttons.eq(i).prop('disabled')).toBe(false);
             }
-          });
-
-          it('should disable today button if after max date', function() {
-            $rootScope.maxDate = new Date().setDate(new Date().getDate() - 2);
-            var wrapElement = $compile('<div><input ng-model="date" uib-datepicker-popup max-date="maxDate" is-open="true"><div>')($rootScope);
-            $rootScope.$digest();
-            assignElements(wrapElement);
-            assignButtonBar();
-
-            expect(buttons.eq(0).prop('disabled')).toBe(true);
           });
 
           it('should not disable any button if max date is null', function() {

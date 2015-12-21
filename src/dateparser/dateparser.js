@@ -428,11 +428,17 @@ angular.module('ui.bootstrap.dateparser', [])
     return parseInt(str, 10);
   }
 
+  this.parseGuessFormat = parseGuessFormat;
   this.toTimezone = toTimezone;
   this.fromTimezone = fromTimezone;
   this.timezoneToOffset = timezoneToOffset;
   this.addDateMinutes = addDateMinutes;
   this.convertTimezoneToLocal = convertTimezoneToLocal;
+
+  function parseGuessFormat(dateString) {
+    var format = 'MMM d, y hh:mm:ss.sss a';
+    return this.parse(dateFilter(dateString, format), format) || new Date(dateString);
+  }
 
   function toTimezone(date, timezone) {
     return date && timezone ? convertTimezoneToLocal(date, timezone) : date;

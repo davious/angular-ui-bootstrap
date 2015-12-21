@@ -642,6 +642,19 @@ describe('date parser', function() {
     expect(dateParser.init).toHaveBeenCalled();
   }));
 
+  describe('parseWithDateFilter', function() {
+    it('parses MM/dd/yyyy', function() {
+      var date = new Date(2009, 11, 23);
+      expect(dateParser.parseGuessFormat('12/23/2009')).toEqual(date);
+    });
+
+
+    it('parses yyyy-MM-ddThh:mm:ss', function() {
+      var date = new Date(2009, 11, 23);
+      expect(dateParser.parseGuessFormat('2009-12-23T00:00:00')).toEqual(date);
+    });
+  });
+
   describe('timezone functions', function() {
     describe('toTimezone', function() {
       it('adjusts date: PST - EST', function() {

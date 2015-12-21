@@ -192,7 +192,7 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
             if (angular.isDate(value)) {
               self[key] = dateParser.fromTimezone(new Date(value), ngModelOptions.timezone);
             } else {
-              self[key] = new Date(dateFilter(value, 'medium'));
+              self[key] = dateParser.parseGuessFormat(value);
             }
           } else {
             self[key] = null;
@@ -892,24 +892,21 @@ function($scope, $element, $attrs, $compile, $log, $parse, $window, $document, $
         }
 
         var getAttribute = $parse($attrs[key]);
-
         watchListeners.push($scope.$parent.$watch(getAttribute, function(value) {
-          if (key === 'minDate' || key === 'maxDate') {
-            if (value === null) {
-              cache[key] = null;
-            } else if (angular.isDate(value)) {
-              cache[key] = dateParser.fromTimezone(new Date(value), ngModelOptions.timezone);
-            } else {
-              cache[key] = new Date(dateFilter(value, 'medium'));
-            }
-
-            $scope.watchData[key] = value === null ? null : cache[key];
+          if (!value && key === 'initDate') {
+            value = new Date();
+          }
+          if (value === null) {
+            $scope.watchData[key] = null;
+          } else if (angular.isDate(value)) {
+            $scope.watchData[key] = dateParser.fromTimezone(new Date(value), ngModelOptions.timezone);
           } else {
-            var date = value ? new Date(value) : new Date();
-            $scope.watchData[key] = dateParser.fromTimezone(date, ngModelOptions.timezone);
+            $scope.watchData[key] = new Date(parseDateStringWithCatchAll(value));
+          }
+          if (key === 'minDate' || key === 'maxDate') {
+            cache[key] = $scope.watchData[key];
           }
         }));
-
         datepickerEl.attr(cameltoDash(key), 'watchData.' + key);
       }
     });
@@ -1117,15 +1114,26 @@ function($scope, $element, $attrs, $compile, $log, $parse, $window, $document, $
 
   function parseDateString(viewValue) {
     var date = dateParser.parse(viewValue, dateFormat, $scope.date);
-    if (isNaN(date)) {
-      for (var i = 0; i < altInputFormats.length; i++) {
-        date = dateParser.parse(viewValue, altInputFormats[i], $scope.date);
-        if (!isNaN(date)) {
-          return date;
-        }
+    if (!isNaN(date)) {
+      return date;
+    }
+    for (var i = 0; i < altInputFormats.length; i++) {
+      date = dateParser.parse(viewValue, altInputFormats[i], $scope.date);
+      if (!isNaN(date)) {
+        return date;
       }
     }
-    return date;
+  }
+
+  function parseDateStringWithCatchAll(viewValue) {
+    var date = parseDateString(viewValue);
+    if (!isNaN(date)) {
+      return date;
+    }
+    date = dateParser.parseGuessFormat(viewValue);
+    if (!isNaN(date)) {
+      return date;
+    }
   }
 
   function parseDate(viewValue) {
