@@ -701,12 +701,12 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
           scope.date = value;
           return value;
         }
-        scope.date = dateParser.fromTimezone(value, ngModelOptions.timezone);
+        scope.date = processDateOnFormat(value);
         return dateFilter(scope.date, dateFormat);
       });
     } else {
       ngModel.$formatters.push(function(value) {
-        scope.date = dateParser.fromTimezone(value, ngModelOptions.timezone);
+        scope.date = processDateOnFormat(value);
         return value;
       });
     }
@@ -830,6 +830,16 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
 
   function cameltoDash(string) {
     return string.replace(/([A-Z])/g, function($1) { return '-' + $1.toLowerCase(); });
+  }
+
+  function processDateOnFormat(value) {
+    if (angular.isString(value)) {
+      var date = parseDateString(value);
+      ngModel.$setViewValue(dateFilter(date, dateFormat));
+      ngModel.$render();
+      return date;
+    }
+    return dateParser.fromTimezone(value, ngModelOptions.timezone);
   }
 
   function parseDateString(viewValue) {

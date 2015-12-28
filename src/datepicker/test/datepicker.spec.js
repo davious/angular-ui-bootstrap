@@ -2704,6 +2704,36 @@ describe('datepicker', function() {
       });
     });
 
+    describe('parses literal dates', function() {
+      var inputEl, dropdownEl, $document, $sniffer, $timeout;
+
+      function assignElements(wrapElement) {
+        inputEl = wrapElement.find('input');
+        dropdownEl = wrapElement.find('ul');
+        element = dropdownEl.find('table');
+      }
+
+      beforeEach(function() {
+        $rootScope.date = "2005-11-01";
+        $rootScope.isopen = true;
+        var wrapper = $compile('<div><input ng-model="date" alt-input-formats="[\'yyyy-MM-dd\']" uib-datepicker-popup="MM/dd/yyyy" is-open="isopen"></div>')($rootScope);
+        $rootScope.$digest();
+        assignElements(wrapper);
+      });
+
+      it('value is correct', function() {
+        expect($rootScope.date).toEqual(new Date('November 01, 2005 00:00:00'));
+      });
+
+      it('has activeDate value of model', function() {
+        expect(element.controller('uibDatepicker').activeDate).toEqual(new Date('November 01, 2005 00:00:00'));
+      });
+
+      it('has `selected` only the correct day', function() {
+        expectSelectedElement(2);
+      });
+    });
+
     describe('ng-model-options', function() {
       describe('timezone', function() {
         var inputEl, dropdownEl, $document, $sniffer, $timeout;
