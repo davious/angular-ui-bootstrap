@@ -428,6 +428,26 @@ describe('datepicker', function() {
         expect(getTitle()).toBe('January 2014');
       });
 
+      describe('parses literal dates', function() {
+        beforeEach(function() {
+          $rootScope.date = "2005-11-01";
+          element = $compile('<uib-datepicker alt-input-formats="[\'yyyy-MM-dd\']" ng-model="date"></uib-datepicker>')($rootScope);
+          $rootScope.$digest();
+        });
+
+        it('value is correct', function() {
+          expect($rootScope.date).toEqual(new Date('November 01, 2005 00:00:00'));
+        });
+
+        it('has activeDate value of model', function() {
+          expect(element.controller('uibDatepicker').activeDate).toEqual(new Date('November 01, 2005 00:00:00'));
+        });
+
+        it('has `selected` only the correct day', function() {
+          expectSelectedElement(2);
+        });
+      });
+
       describe('when `model` changes', function() {
         function testCalendar() {
           expect(getTitle()).toBe('November 2005');
@@ -2509,21 +2529,21 @@ describe('datepicker', function() {
       });
 
       describe('altInputFormats', function() {
-        describe('datepickerPopupConfig.altInputFormats', function() {
+        describe('datepickerConfig.altInputFormats', function() {
           var originalConfig = {};
-          beforeEach(inject(function(uibDatepickerPopupConfig) {
+          beforeEach(inject(function(uibDatepickerConfig) {
             $rootScope.date = new Date('November 9, 1980');
-            angular.extend(originalConfig, uibDatepickerPopupConfig);
-            uibDatepickerPopupConfig.datepickerPopup = 'MM-dd-yyyy';
-            uibDatepickerPopupConfig.altInputFormats = ['M!/d!/yyyy'];
+            angular.extend(originalConfig, uibDatepickerConfig);
+            uibDatepickerConfig.datepickerPopup = 'MM-dd-yyyy';
+            uibDatepickerConfig.altInputFormats = ['M!/d!/yyyy'];
             var wrapElement = $compile('<div><input ng-model="date" uib-datepicker-popup is-open="true"></div>')($rootScope);
             $rootScope.$digest();
             assignElements(wrapElement);
           }));
 
-          afterEach(inject(function(uibDatepickerPopupConfig) {
+          afterEach(inject(function(uibDatepickerConfig) {
             // return it to the original state
-            angular.extend(uibDatepickerPopupConfig, originalConfig);
+            angular.extend(uibDatepickerConfig, originalConfig);
           }));
 
           it('changes date format', function() {

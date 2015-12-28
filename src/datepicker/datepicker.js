@@ -19,7 +19,8 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   minDate: null,
   maxDate: null,
   shortcutPropagation: false,
-  ngModelOptions: {}
+  ngModelOptions: {},
+  altInputFormats: []
 })
 
 .controller('UibDatepickerController', ['$scope', '$attrs', '$parse', '$interpolate', '$log', 'dateFilter', 'uibDatepickerConfig', '$datepickerSuppressError', 'uibDateParser',
@@ -37,7 +38,7 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   });
 
   // Evaled configuration attributes
-  angular.forEach(['showWeeks', 'startingDay', 'yearRows', 'yearColumns', 'shortcutPropagation'], function(key) {
+  angular.forEach(['showWeeks', 'startingDay', 'yearRows', 'yearColumns', 'shortcutPropagation', 'altInputFormats'], function(key) {
     self[key] = angular.isDefined($attrs[key]) ? $scope.$parent.$eval($attrs[key]) : datepickerConfig[key];
   });
 
@@ -45,11 +46,11 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   angular.forEach(['minDate', 'maxDate'], function(key) {
     if ($attrs[key]) {
       $scope.$parent.$watch($attrs[key], function(value) {
-        self[key] = value ? angular.isDate(value) ? dateParser.fromTimezone(new Date(value), ngModelOptions.timezone) : new Date(dateFilter(value, 'medium')) : null;
+        self[key] = value ? new Date(parseDateWithCatchAll(value)) : null;
         self.refreshView();
       });
     } else {
-      self[key] = datepickerConfig[key] ? dateParser.fromTimezone(new Date(datepickerConfig[key]), ngModelOptions.timezone) : null;
+      self[key] = datepickerConfig[key] ? dateParse(datepickerConfig[key]) : null;
     }
   });
 
@@ -71,10 +72,10 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   $scope.uniqueId = 'datepicker-' + $scope.$id + '-' + Math.floor(Math.random() * 10000);
 
   if (angular.isDefined($attrs.initDate)) {
-    this.activeDate = dateParser.fromTimezone($scope.$parent.$eval($attrs.initDate), ngModelOptions.timezone) || new Date();
+    this.activeDate = parseDate($scope.$parent.$eval($attrs.initDate)) || new Date();
     $scope.$parent.$watch($attrs.initDate, function(initDate) {
       if (initDate && (ngModelCtrl.$isEmpty(ngModelCtrl.$modelValue) || ngModelCtrl.$invalid)) {
-        self.activeDate = dateParser.fromTimezone(initDate, ngModelOptions.timezone);
+        self.activeDate = parseDate(initDate);
         self.refreshView();
       }
     });
@@ -111,13 +112,40 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
     };
   };
 
+  function parseDateString(viewValue) {
+    if (angular.isString(viewValue)) {
+      for (var i = 0; i < self.altInputFormats.length; i++) {
+        date = dateParser.parse(viewValue, self.altInputFormats[i]);
+        if (!isNaN(date)) {
+          return date;
+        }
+      }
+    }
+  }
+
+  function parseDate(date) {
+    return parseDateString(date) || dateParser.fromTimezone(date, ngModelOptions.timezone);
+  }
+
+  function parseDateWithCatchAll(date) {
+    return parseDate(date) || new Date(dateFilter(date, 'medium'));
+  }
+
   this.render = function() {
     if (ngModelCtrl.$viewValue) {
       var date = new Date(ngModelCtrl.$viewValue),
           isValid = !isNaN(date);
 
       if (isValid) {
-        this.activeDate = dateParser.fromTimezone(date, ngModelOptions.timezone);
+        if (angular.isString(ngModelCtrl.$viewValue)) {
+          date = parseDateString(ngModelCtrl.$viewValue);
+          if (!isNaN(date)) {
+            this.activeDate = date;
+            ngModelCtrl.$setViewValue(this.activeDate);
+          }
+        } else {
+          this.activeDate = dateParser.fromTimezone(date, ngModelOptions.timezone);
+        }
       } else if (!$datepickerSuppressError) {
         $log.error('Datepicker directive: "ng-model" value must be a Date object, a number of milliseconds since 01.01.1970 or a string representing an RFC2822 or ISO 8601 date.');
       }
@@ -553,8 +581,7 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   closeOnDateSelection: true,
   appendToBody: false,
   showButtonBar: true,
-  onOpenFocus: true,
-  altInputFormats: []
+  onOpenFocus: true
 })
 
 .controller('UibDatepickerPopupController', ['$scope', '$element', '$attrs', '$compile', '$parse', '$document', '$rootScope', '$uibPosition', 'dateFilter', 'uibDateParser', 'uibDatepickerPopupConfig', '$timeout', 'uibDatepickerConfig',
@@ -576,7 +603,7 @@ function(scope, element, attrs, $compile, $parse, $document, $rootScope, $positi
     onOpenFocus = angular.isDefined(attrs.onOpenFocus) ? scope.$parent.$eval(attrs.onOpenFocus) : datepickerPopupConfig.onOpenFocus;
     datepickerPopupTemplateUrl = angular.isDefined(attrs.datepickerPopupTemplateUrl) ? attrs.datepickerPopupTemplateUrl : datepickerPopupConfig.datepickerPopupTemplateUrl;
     datepickerTemplateUrl = angular.isDefined(attrs.datepickerTemplateUrl) ? attrs.datepickerTemplateUrl : datepickerPopupConfig.datepickerTemplateUrl;
-    altInputFormats = angular.isDefined(attrs.altInputFormats) ? scope.$parent.$eval(attrs.altInputFormats) : datepickerPopupConfig.altInputFormats;
+    altInputFormats = angular.isDefined(attrs.altInputFormats) ? scope.$parent.$eval(attrs.altInputFormats) : datepickerConfig.altInputFormats;
 
     scope.showButtonBar = angular.isDefined(attrs.showButtonBar) ? scope.$parent.$eval(attrs.showButtonBar) : datepickerPopupConfig.showButtonBar;
 
