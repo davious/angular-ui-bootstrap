@@ -97,12 +97,12 @@ The datepicker has 3 modes:
   <small class="badge">$</small>
   <i class="glyphicon glyphicon-eye-open"></i> -
   The date object. Needs to be a Javascript Date object.
-  
+
 * `ng-model-options`
   <small class="badge">$</small>
   <small class="badge">C</small>
   _(Default: `{}`)_ -
-  Supported properties:
+  Supported [angular ngModelOptions](https://docs.angularjs.org/api/ng/directive/ngModelOptions):
   * allowInvalid
   * timezone
 
@@ -204,7 +204,7 @@ Options for the uib-datepicker must be passed as JSON using the `datepicker-opti
   <small class="badge">C</small>
   _(Default: `true`)_ -
   Whether or not to display a button bar underneath the uib-datepicker.
-  
+
 * `type`
   <small class="badge">C</small>
   _(Default: `text`, Config: `html5Types`)_ -
